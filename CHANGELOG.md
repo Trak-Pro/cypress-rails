@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## Unreleased
+* Run one state reset at a time: a request that arrives while a reset is in
+progress now waits for it instead of starting a second one alongside it
+
 ## 0.7.1
 * Add Rack 3.1 support [#163](https://github.com/testdouble/cypress-rails/pull/163)
 

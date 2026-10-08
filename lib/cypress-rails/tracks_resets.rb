@@ -10,10 +10,18 @@ module CypressRails
       @reset_needed = true
     end
 
+    # One reset at a time. Without the lock, anything else that passes through
+    # the Rails executor while a reset is running (the next request, Action
+    # Cable work from a page still open) sees the flag still set and starts a
+    # second reset alongside the first. A caller that waited finds the flag
+    # cleared and does nothing; if the reset raised, the flag is still set and
+    # the caller runs it again.
     def reset_state_if_needed(transactional_server)
-      if @reset_needed
-        ResetsState.new.call(transactional_server: transactional_server)
-        @reset_needed = false
+      @lock.synchronize do
+        if @reset_needed
+          ResetsState.new.call(transactional_server: transactional_server)
+          @reset_needed = false
+        end
       end
     end
 
@@ -21,6 +29,7 @@ module CypressRails
 
     def initialize
       @reset_needed = false
+      @lock = Mutex.new
     end
   end
 end
